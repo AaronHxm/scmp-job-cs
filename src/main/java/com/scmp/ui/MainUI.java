@@ -4,6 +4,8 @@ package com.scmp.ui;
 import com.scmp.model.ContractInfo;
 import com.scmp.model.LogEntry;
 import com.scmp.model.User;
+import com.scmp.service.ApiService;
+import com.scmp.ui.LoginUI;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -28,13 +30,15 @@ public class MainUI extends Application {
     
 
     private User currentUser;
-
+    private ApiService apiService;
+    private Stage primaryStage;
     private CopyOnWriteArrayList<LogEntry> logs = new CopyOnWriteArrayList<>();
     
     private ObservableList<ContractInfo> contractData = FXCollections.observableArrayList();
     private TextArea logTextArea;
     
-    public MainUI( User currentUser) {
+    public MainUI(ApiService apiService, User currentUser) {
+        this.apiService = apiService;
         this.currentUser = currentUser;
     }
     
@@ -121,15 +125,28 @@ public class MainUI extends Application {
         queryButton.setStyle("-fx-font-size: 14px;");
         queryButton.setOnAction(e -> {
             try {
-                // 使用模拟数据查询合同
-                if (currentUser != null && currentUser.getToken() != null) {
-                    // 模拟API查询，返回一些示例数据
-                    List<ContractInfo> allContracts = generateMockContracts();
+                // 查询合同
+                if (currentUser != null && currentUser.isLoggedIn()) {
+                    Integer maxOverdueDays = null;
+                    try {
+                        maxOverdueDays = Integer.parseInt(overdueDaysField.getText());
+                    } catch (NumberFormatException ex) {
+                        logInfo("逾期天数输入无效，使用默认值360", "-");
+                        maxOverdueDays = 360;
+                    }
                     
-                    contractData.setAll(allContracts);
-                    logInfo("查询合同成功，获取到 " + allContracts.size() + " 条记录", "-");
+                    // 使用API查询合同，传入选中的字母列表和逾期天数
+                    List<ContractInfo> filteredContracts = apiService.queryContracts(currentUser, maxOverdueDays, selectedLetters);
+                    
+                    // 为每个合同设置选中状态为false
+                    for (ContractInfo contract : filteredContracts) {
+                        contract.setSelected(false);
+                    }
+                    
+                    contractData.setAll(filteredContracts);
+                    logInfo("查询合同成功，获取到 " + filteredContracts.size() + " 条记录", "-");
                 } else {
-                    showAlert("错误", "用户未登录或token为空");
+                    showAlert("错误", "用户未登录");
                 }
             } catch (Exception ex) {
                 logError("查询合同失败: " + ex.getMessage(), "-");
@@ -237,6 +254,25 @@ public class MainUI extends Application {
         panel.setPadding(new Insets(10));
         panel.setStyle("-fx-background-color: #f0f0f0;");
 
+        // 返回登录按钮
+        Button backToLoginButton = new Button("返回登录");
+        backToLoginButton.setPrefWidth(100);
+        backToLoginButton.setStyle("-fx-font-size: 14px;");
+        backToLoginButton.setOnAction(e -> {
+            try {
+                // 清理资源
+                stop();
+                // 关闭当前窗口
+                primaryStage.close();
+                // 打开登录页面
+                LoginUI loginUI = new LoginUI();
+                Stage loginStage = new Stage();
+                loginUI.start(loginStage);
+            } catch (Exception ex) {
+                logError("返回登录页面失败: " + ex.getMessage(), "");
+            }
+        });
+        
         // 立即抢单按钮 - 增大尺寸
         Button grabNowButton = new Button("立即抢单");
         grabNowButton.setPrefWidth(100);
@@ -372,6 +408,7 @@ public class MainUI extends Application {
         });
 
         panel.getChildren().addAll(
+            backToLoginButton,
             grabNowButton,
             new Label("定时抢单时间："),
             hourComboBox,

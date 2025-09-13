@@ -117,20 +117,16 @@ public class LoginUI extends Application {
     }
     
     // 显示主界面
-    private void showMainUI(Stage primaryStage) {
-        // 手动创建服务实例
-        ApiService apiService = new ApiService();
-        LogService logService = new LogService();
-        ScheduledTaskService scheduledTaskService = new ScheduledTaskService(apiService, logService);
-        
-        MainUI mainUI = new MainUI(currentUser);
-        try {
-            mainUI.start(primaryStage);
-        } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("错误", "无法加载主界面");
+        private void showMainUI(Stage primaryStage) {
+            // 使用已创建的apiService实例
+            MainUI mainUI = new MainUI(apiService, currentUser);
+            try {
+                mainUI.start(primaryStage);
+            } catch (Exception e) {
+                e.printStackTrace();
+                showAlert("错误", "无法加载主界面");
+            }
         }
-    }
     
     // 显示警告对话框
     private void showAlert(String title, String message) {

@@ -86,12 +86,12 @@ public class ApiService {
     }
     
     // 查询合同接口 - 带筛选条件
-    public List<ContractInfo> queryContracts(User user, Integer maxOverdueDays, String letter) {
+    public List<ContractInfo> queryContracts(User user, Integer maxOverdueDays, List<String> letters) {
         // 首先查询所有合同
         List<ContractInfo> allContracts = queryAllContracts(user);
         
         // 如果没有任何过滤条件，直接返回所有合同
-        if ((maxOverdueDays == null || maxOverdueDays < 0) && (letter == null || letter.trim().isEmpty())) {
+        if ((maxOverdueDays == null || maxOverdueDays < 0) && (letters == null || letters.isEmpty())) {
             logger.info("没有设置过滤条件，返回所有合同");
             return allContracts;
         }
@@ -108,13 +108,23 @@ public class ApiService {
             }
             
             // 如果通过了逾期天数过滤，再检查字母过滤条件
-            if (passFilter && letter != null && !letter.trim().isEmpty() && contract.getContractNo() != null) {
+            if (passFilter && letters != null && !letters.isEmpty() && contract.getContractNo() != null) {
                 String contractNo = contract.getContractNo();
                 // 检查合同编号是否至少有3个字符
                 if (contractNo.length() >= 3) {
-                    // 获取第三个字符（索引为2）并检查是否匹配
+                    // 获取第三个字符（索引为2）
                     char thirdChar = contractNo.charAt(2);
-                    passFilter = String.valueOf(thirdChar).equalsIgnoreCase(letter.trim());
+                    String thirdCharStr = String.valueOf(thirdChar).toUpperCase();
+                    
+                    // 检查第三个字符是否在允许的字母列表中
+                    boolean letterMatch = false;
+                    for (String letter : letters) {
+                        if (thirdCharStr.equalsIgnoreCase(letter.trim())) {
+                            letterMatch = true;
+                            break;
+                        }
+                    }
+                    passFilter = letterMatch;
                 } else {
                     // 合同编号不足3个字符，不满足条件
                     passFilter = false;
@@ -131,10 +141,25 @@ public class ApiService {
         return filteredContracts;
     }
     
-    // 兼容旧版本的方法
+    // 兼容旧版本的方法 - 单个字母
     public List<ContractInfo> queryContracts(Integer maxOverdueDays, String letter) {
         // 伪代码实现
         System.out.println("调用查询接口: 逾期天数<" + maxOverdueDays + ", 字母=" + letter);
+        
+        // 模拟返回数据
+        ContractInfo contract1 = new ContractInfo();
+        contract1.setCustomerName("张三");
+
+        ContractInfo contract2 = new ContractInfo();
+        contract2.setCustomerName("李四");
+        
+        return Arrays.asList(contract1, contract2);
+    }
+    
+    // 兼容旧版本的方法 - 多个字母
+    public List<ContractInfo> queryContracts(Integer maxOverdueDays, List<String> letters) {
+        // 伪代码实现
+        System.out.println("调用查询接口: 逾期天数<" + maxOverdueDays + ", 字母列表=" + letters);
         
         // 模拟返回数据
         ContractInfo contract1 = new ContractInfo();
