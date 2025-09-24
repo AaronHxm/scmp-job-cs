@@ -1,33 +1,31 @@
 package com.scmp.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.scmp.model.ContractInfo;
-import com.scmp.model.GrabCaseRequest;
-import com.scmp.model.QueryResponse;
-import com.scmp.model.User;
+import com.scmp.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
-import org.jetbrains.annotations.Contract;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.ArrayList;
 
+@Slf4j
 public class ApiService {
     
     private OkHttpClient client;
     private static final Logger logger = Logger.getLogger(ApiService.class.getName());
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     private final CaseGrabService caseGrabService;
+    private final ContractService contractService;
     
     public ApiService() {
         // 初始化OkHttpClient
         this.client = new OkHttpClient();
         // 初始化抢单服务
         this.caseGrabService = new CaseGrabService();
+
+        this.contractService = new ContractService();
     }
     
     // 登录接口 - 账号密码登录
@@ -88,10 +86,15 @@ public class ApiService {
     // 查询合同接口 - 带筛选条件
     public List<ContractInfo> queryContracts(User user, Integer maxOverdueDays, List<String> letters) {
         // 首先查询所有合同
-        List<ContractInfo> allContracts = queryAllContracts(user);
+        QueryResponse<ContractInfo> contractInfoQueryResponse = contractService.fetchAllPreGrabCases(user);
+        if (Objects.isNull(contractInfoQueryResponse)) {
+            return List.of();
+        }
+
+        List<ContractInfo> allContracts = contractInfoQueryResponse.getRows();
         
         // 如果没有任何过滤条件，直接返回所有合同
-        if ((maxOverdueDays == null || maxOverdueDays < 0) && (letters == null || letters.isEmpty())) {
+        if ((maxOverdueDays == null || maxOverdueDays < 0) ) {
             logger.info("没有设置过滤条件，返回所有合同");
             return allContracts;
         }
@@ -140,124 +143,9 @@ public class ApiService {
         logger.info("过滤后返回合同数量: " + filteredContracts.size());
         return filteredContracts;
     }
-    
-    // 兼容旧版本的方法 - 单个字母
-    public List<ContractInfo> queryContracts(Integer maxOverdueDays, String letter) {
-        // 伪代码实现
-        System.out.println("调用查询接口: 逾期天数<" + maxOverdueDays + ", 字母=" + letter);
-        
-        // 模拟返回数据
-        ContractInfo contract1 = new ContractInfo();
-        contract1.setCustomerName("张三");
 
-        ContractInfo contract2 = new ContractInfo();
-        contract2.setCustomerName("李四");
-        
-        return Arrays.asList(contract1, contract2);
-    }
-    
-    // 兼容旧版本的方法 - 多个字母
-    public List<ContractInfo> queryContracts(Integer maxOverdueDays, List<String> letters) {
-        // 伪代码实现
-        System.out.println("调用查询接口: 逾期天数<" + maxOverdueDays + ", 字母列表=" + letters);
-        
-        // 模拟返回数据
-        ContractInfo contract1 = new ContractInfo();
-        contract1.setCustomerName("张三");
 
-        ContractInfo contract2 = new ContractInfo();
-        contract2.setCustomerName("李四");
-        
-        return Arrays.asList(contract1, contract2);
-    }
-    
-    // 新的查询合同接口 - 不考虑筛选条件，使用token认证
-    public List<ContractInfo> queryAllContracts(User user) {
-        // 检查用户是否已登录并有token
-        if (user == null || !user.isLoggedIn() || user.getToken() == null || user.getToken().trim().isEmpty()) {
-            logger.warning("用户未登录或token为空");
-            return new ArrayList<>();
-        }
-        
-        logger.info("调用新的查询接口，使用token认证");
-        
-        // 构建请求URL
-        String url = CollectionServiceConstants.BASE_URL + 
-                (CollectionServiceConstants.BASE_URL.endsWith("/") ? "" : "/") +
-                "gateway/collectionservice/dfcw/outSrc/preGrabCaseList" +
-                "?tenancyId=" + CollectionServiceConstants.TENANCY_ID +
-                "&menuId=" + CollectionServiceConstants.MENU_ID +
-                "&menuName=" + CollectionServiceConstants.MENU_NAME +
-                "&orgTemplateId=" + CollectionServiceConstants.ORG_TEMPLATE_ID +
-                "&ClientServer=https:%2F%2Fcsmp.df-finance.com.cn";
-        
-        // 构建请求头
-        Headers headers = new Headers.Builder()
-                .add("Content-Type", "application/json")
-                .add("Accept", "*")
-                .add("Authorization", user.getToken())
-                .add("Expires", "0")
-                .add("Pragma", "no-cache")
-                .add("clientId", "mplanyou")
-                .add("gversion", "")
-                .add("lang", "ZH_CN")
-                .add("noncestr", "16636a46-792d-8513-83bb-db0b51f4db54")
-                .add("range", "1")
-                .add("sign", "fbc0842bab517a84c3b36a6dc5139fa5a4a0a3105bedf169b5da8514789383c35f706085f4374f5e61c6788b6b52df598be17143c889d4a2b80e435e38c78d65")
-                .add("timestamp", String.valueOf(System.currentTimeMillis()))
-                .add("Cookie", "user-code=" + CollectionServiceConstants.USER_CODE_COOKIE)
-                .add("User-Agent", "Apifox/1.0.0 (https://apifox.com)")
-                .add("Host", "csmp.df-finance.com.cn")
-                .add("Connection", "keep-alive")
-                .build();
-        
-        // 构建请求体（不考虑筛选条件）
-        String requestBody = String.format(
-                "{\"pageIndex\":%d,\"pageSize\":%d}",
-                1, // 只获取第一页数据
-                CollectionServiceConstants.PAGE_SIZE
-        );
-        
-        // 创建请求
-        Request request = new Request.Builder()
-                .url(url)
-                .headers(headers)
-                .post(RequestBody.create(requestBody, MediaType.parse("application/json")))
-                .build();
-        
-        try {
-            Response response = client.newCall(request).execute();
-            if (response.isSuccessful() && response.body() != null) {
-                String responseBody = response.body().string();
-                logger.info("查询合同成功，响应体大小: " + responseBody.length() + " 字节");
-                
-                // 解析响应体，先解析到包装类
-                // 使用 TypeReference 指定泛型类型
-                QueryResponse<ContractInfo> responseWrapper = objectMapper.readValue(
-                        responseBody,
-                        new TypeReference<QueryResponse<ContractInfo>>() {}
-                );
-                if (responseWrapper != null) {
-                    QueryResponse<ContractInfo> queryResponse = responseWrapper;
-                    if (queryResponse.getRows() != null) {
-                        return queryResponse.getRows();
-                    } else {
-                        logger.warning("查询结果中的数据列表为空");
-                        return new ArrayList<>();
-                    }
-                } else {
 
-                    return new ArrayList<>();
-                }
-            } else {
-                logger.warning("查询合同失败，HTTP状态码: " + response.code());
-                return new ArrayList<>();
-            }
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "查询合同发生异常", e);
-            return new ArrayList<>();
-        }
-    }
     
     // 抢单接口 - 原始方法，保持向后兼容
     public boolean grabContract(String contractNumber) {

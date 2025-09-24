@@ -91,6 +91,19 @@ public class ContractInfo {
 
     private String userId;
 
+    public String getHistoryRemarks() {
+        return historyRemarks;
+    }
+
+    public void setHistoryRemarks(String historyRemarks) {
+        this.historyRemarks = historyRemarks;
+    }
+
+    /**
+     * 历史聊天信息
+     */
+    private String historyRemarks;
+
     private boolean selected;
 
     public boolean isSelected() {

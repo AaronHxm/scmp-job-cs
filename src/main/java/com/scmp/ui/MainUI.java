@@ -3,9 +3,11 @@ package com.scmp.ui;
 
 import com.scmp.GrapTaskManager;
 import com.scmp.model.ContractInfo;
+import com.scmp.model.HistoryInfo;
 import com.scmp.model.LogEntry;
 import com.scmp.model.User;
 import com.scmp.service.ApiService;
+import com.scmp.service.HistoryService;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -19,13 +21,18 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+@Slf4j
 public class MainUI extends Application {
     
 
@@ -142,6 +149,29 @@ public class MainUI extends Application {
                     for (ContractInfo contract : filteredContracts) {
                         contract.setSelected(false);
                     }
+
+                    //
+                    HistoryService historyService = new HistoryService();
+                    filteredContracts.forEach(v ->{
+                        List<HistoryInfo> historyInfoList = historyService.getHistoryInfoByContractNo(v.getContractNo(), v.getUserId());
+                        if(historyInfoList !=null && !historyInfoList.isEmpty()){
+//
+                           String historyRemarks  = IntStream.range(0, historyInfoList.size())
+                                    .mapToObj(i -> {
+                                        HistoryInfo info = historyInfoList.get(i);
+                                        // 处理可能为null的字段
+                                        String callTimeStr = info.getCallTime() != null ? info.getCallTime().toString() : "null";
+                                        String createNameStr = info.getCreateName() != null ? info.getCreateName() : "null";
+                                        String requireContentStr = info.getRequireContent() != null ? info.getRequireContent() : "null";
+
+                                        // 格式化字符串：序号、callTime，客服：【createName】联系结果为：【requireContent】
+                                        return (i + 1) + "、" + callTimeStr + "，客服：【" + createNameStr + "】联系结果为：【" + requireContentStr + "】";
+                                    })
+                                    .collect(Collectors.joining("\n"));
+
+                           v.setHistoryRemarks(historyRemarks);
+                        }
+                    });
                     
                     contractData.setAll(filteredContracts);
                     logInfo("查询合同成功，获取到 " + filteredContracts.size() + " 条记录", "-");
