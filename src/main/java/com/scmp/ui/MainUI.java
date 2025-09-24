@@ -1,11 +1,11 @@
 package com.scmp.ui;
 
 
+import com.scmp.GrapTaskManager;
 import com.scmp.model.ContractInfo;
 import com.scmp.model.LogEntry;
 import com.scmp.model.User;
 import com.scmp.service.ApiService;
-import com.scmp.ui.LoginUI;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -285,23 +285,9 @@ public class MainUI extends Application {
             }
 
             // 执行抢单操作
-            for (ContractInfo contract : selectedContracts) {
-                try {
-                    if (currentUser != null && currentUser.getToken() != null) {
-                        // 模拟抢单操作，随机成功或失败
-                        boolean success = Math.random() > 0.3; // 70%的成功率
-                        if (success) {
-                            logSuccess("抢单成功", contract.getContractNo());
-                        } else {
-                            logError("抢单失败", contract.getContractNo());
-                        }
-                    } else {
-                        showAlert("错误", "用户未登录或token为空");
-                    }
-                } catch (Exception ex) {
-                    logError("抢单异常: " + ex.getMessage(), contract.getContractNo());
-                }
-            }
+            GrapTaskManager grapTaskManager = new GrapTaskManager();
+
+            grapTaskManager.processContractsAsync(contractData);
         });
 
         // 定时抢单按钮和时间选择器
@@ -383,21 +369,11 @@ public class MainUI extends Application {
                 final String token = currentUser.getToken();
                 // 使用Java内置的ScheduledExecutorService来替代taskManager
                 java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
-                    for (ContractInfo contract : selectedContracts) {
-                        try {
-                            if (currentUser != null && currentUser.getToken() != null) {
-                                // 模拟抢单操作，随机成功或失败
-                                boolean success = Math.random() > 0.3; // 70%的成功率
-                                if (success) {
-                                    logSuccess("定时抢单成功", contract.getContractNo());
-                                } else {
-                                    logError("定时抢单失败", contract.getContractNo());
-                                }
-                            }
-                        } catch (Exception ex) {
-                            logError("定时抢单异常: " + ex.getMessage(), contract.getContractNo());
-                        }
-                    }
+                    // 定时任务开始执行
+                    GrapTaskManager grapTaskManager = new GrapTaskManager();
+
+                    grapTaskManager.processContractsAsync(contractData);
+
                 }, delayMs, java.util.concurrent.TimeUnit.MILLISECONDS);
 
                 showAlert("成功", "已设置定时抢单任务，时间：" + grabTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));

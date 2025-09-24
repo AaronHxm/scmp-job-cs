@@ -19,8 +19,4 @@ public class CollectionServiceConstants {
     
     // 查询参数
     public static final int PAGE_SIZE = 500;
-    public static final String DCA_STATUS = "1";
-    public static final String DCA_TYPE = "1";
-    public static final String ORDER_ASC = "false";
-    public static final String ORDER_COLUMN = "overdueDays";
 }

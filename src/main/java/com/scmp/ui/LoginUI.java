@@ -2,8 +2,6 @@ package com.scmp.ui;
 
 import com.scmp.model.User;
 import com.scmp.service.ApiService;
-import com.scmp.service.LogService;
-import com.scmp.service.ScheduledTaskService;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;

@@ -11,7 +11,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class ScheduledTaskService {
+public class    ScheduledTaskService {
     
     private ApiService apiService;
     private LogService logService;
