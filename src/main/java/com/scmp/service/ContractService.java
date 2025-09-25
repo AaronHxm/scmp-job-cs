@@ -91,17 +91,16 @@ public class ContractService {
 
     public QueryResponse<ContractInfo> fetchPreGrabCases(int pageIndex,String token) {
         // 构建请求URL
-        String url = CollectionServiceConstants.BASE_URL +
+        String url = Constants.BASE_URL +
                 "/gateway/collectionservice/dfcw/outSrc/preGrabCaseList" +
-                "?tenancyId=" + CollectionServiceConstants.TENANCY_ID +
-                "&menuId=" + CollectionServiceConstants.MENU_ID +
-                "&menuName=" + CollectionServiceConstants.MENU_NAME +
-                "&orgTemplateId=" + CollectionServiceConstants.ORG_TEMPLATE_ID +
+                "?tenancyId=" + Constants.TENANCY_ID +
+                "&menuId=" + Constants.MENU_ID +
+                "&menuName=" + Constants.MENU_NAME +
+                "&orgTemplateId=" + Constants.ORG_TEMPLATE_ID +
                 "&ClientServer=https:%2F%2Fcsmp.df-finance.com.cn";
 
         // 构建请求头
         HttpHeaders headers = new HttpHeaders();
-////        headers.set("Cookie", "user-code=" + CollectionServiceConstants.USER_CODE_COOKIE);
 
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.ALL));
@@ -124,11 +123,11 @@ public class ContractService {
         String requestBody = String.format(
                 "{\"pageIndex\":%d,\"pageSize\":%d,\"dcaStatus\":\"%s\",\"dcaType\":\"%s\",\"orderAsc\":\"%s\",\"orderColumn\":\"%s\"}",
                 pageIndex,
-                CollectionServiceConstants.PAGE_SIZE,
-                CollectionServiceConstants.DCA_STATUS,
-                CollectionServiceConstants.DCA_TYPE,
-                CollectionServiceConstants.ORDER_ASC,
-                CollectionServiceConstants.ORDER_COLUMN
+                Constants.PAGE_SIZE,
+                Constants.DCA_STATUS,
+                Constants.DCA_TYPE,
+                Constants.ORDER_ASC,
+                Constants.ORDER_COLUMN
         );
 
         // 创建请求实体

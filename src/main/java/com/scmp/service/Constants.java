@@ -3,7 +3,7 @@ package com.scmp.service;
 /**
  * 采集服务常量配置类
  */
-public class CollectionServiceConstants {
+public class Constants {
     // API基础URL
     public static final String BASE_URL = "https://csmp.df-finance.com.cn";
     
