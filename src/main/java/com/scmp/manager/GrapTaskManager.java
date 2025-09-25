@@ -66,12 +66,17 @@ public class GrapTaskManager {
             attempts++;
 
 
-            logService.info("订单号"+contract.getContractNo()+"重试" +attempts +"次数", contract.getContractNo());
 
 
             lastResponse = caseGrabService.grabCase(contract.getSyskey(), contract.getContractNo(), contract.getUserId());
 
             if (isSuccessResponse(lastResponse)) {
+                if (lastResponse.contains("受理")){
+                    logService.info("订单号:{},重试次数:{},结果:{},甲方返回信息:{}", contract.getContractNo(),contract.getContractNo(),attempts,"SUCCESS",lastResponse);
+                }else {
+                    logService.info("订单号:{},重试次数:{},结果:{},甲方返回信息:{}", contract.getContractNo(),contract.getContractNo(),attempts,"失败",lastResponse);
+                }
+
 
                 return new ProcessResult(contract.getContractNo(), true, lastResponse, attempts);
             }
@@ -85,7 +90,7 @@ public class GrapTaskManager {
                         Thread.sleep(delay);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        logService.error("Retry interrupted for [{}]", contract.getContractNo());
+                        logService.info("订单号:{},重试次数:{},结果:{}", contract.getContractNo(),contract.getContractNo(),attempts,"ERROR");
                         return new ProcessResult(contract.getContractNo(), false, "Interrupted", attempts);
                     }
                 }

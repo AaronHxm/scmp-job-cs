@@ -561,8 +561,6 @@ public class MainUI extends Application {
                     .append(" [")
                     .append(log.getLevel())
                     .append("] ")
-                    .append(log.getContractNumber())
-                    .append(": ")
                     .append(log.getContent())
                     .append("\n");
         }

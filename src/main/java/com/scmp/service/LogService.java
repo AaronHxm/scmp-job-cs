@@ -94,42 +94,94 @@ public class LogService {
 
     /**
      * 记录INFO级别日志
-     * @param content 日志内容
+     * @param pattern 日志模式，使用{}作为占位符
      * @param contractNumber 合同号
+     * @param args 替换占位符的参数
      */
-    public static void info(String content, String contractNumber) {
+    public static void info(String pattern, String contractNumber, Object... args) {
+        String content = formatMessage(pattern, args);
         LogEntry logEntry = createLogEntry(LogLevel.INFO, content, contractNumber);
         getInstance().addLog(logEntry);
     }
 
     /**
      * 记录ERROR级别日志
-     * @param content 日志内容
+     * @param pattern 日志模式，使用{}作为占位符
      * @param contractNumber 合同号
+     * @param args 替换占位符的参数
      */
-    public static void error(String content, String contractNumber) {
+    public static void error(String pattern, String contractNumber, Object... args) {
+        String content = formatMessage(pattern, args);
         LogEntry logEntry = createLogEntry(LogLevel.ERROR, content, contractNumber);
         getInstance().addLog(logEntry);
     }
 
     /**
      * 记录DEBUG级别日志
-     * @param content 日志内容
+     * @param pattern 日志模式，使用{}作为占位符
      * @param contractNumber 合同号
+     * @param args 替换占位符的参数
      */
-    public static void debug(String content, String contractNumber) {
+    public static void debug(String pattern, String contractNumber, Object... args) {
+        String content = formatMessage(pattern, args);
         LogEntry logEntry = createLogEntry(LogLevel.INFO, content, contractNumber);
         getInstance().addLog(logEntry);
     }
 
     /**
      * 记录WARN级别日志
-     * @param content 日志内容
+     * @param pattern 日志模式，使用{}作为占位符
      * @param contractNumber 合同号
+     * @param args 替换占位符的参数
      */
-    public static void warn(String content, String contractNumber) {
+    public static void warn(String pattern, String contractNumber, Object... args) {
+        String content = formatMessage(pattern, args);
         LogEntry logEntry = createLogEntry(LogLevel.WARNING, content, contractNumber);
         getInstance().addLog(logEntry);
+    }
+
+    /**
+     * 格式化日志消息，替换{}占位符
+     * @param pattern 原始消息模式
+     * @param args 参数
+     * @return 格式化后的消息
+     */
+    private static String formatMessage(String pattern, Object... args) {
+        if (args == null || args.length == 0) {
+            return pattern;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        int argIndex = 0;
+        int patternIndex = 0;
+        
+        while (patternIndex < pattern.length()) {
+            int placeholderStart = pattern.indexOf("{}", patternIndex);
+            if (placeholderStart == -1) {
+                sb.append(pattern.substring(patternIndex));
+                break;
+            }
+            
+            sb.append(pattern.substring(patternIndex, placeholderStart));
+            if (argIndex < args.length) {
+                sb.append(args[argIndex++]);
+            } else {
+                sb.append("{}");
+            }
+            patternIndex = placeholderStart + 2;
+        }
+        
+        // 处理多余的参数
+        if (argIndex < args.length) {
+            sb.append(" [额外参数: ");
+            for (int i = argIndex; i < args.length; i++) {
+                if (i > argIndex) sb.append(", ");
+                sb.append(args[i]);
+            }
+            sb.append("]");
+        }
+        
+        return sb.toString();
     }
 
     /**
