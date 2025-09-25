@@ -11,7 +11,6 @@ import com.scmp.service.LogService;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class GrapTaskManager {
@@ -19,7 +18,7 @@ public class GrapTaskManager {
 
     private static final int MAX_RETRIES = 100;
 
-    private LogService logService = new LogService();
+    private LogService logService = LogService.getInstance();
 
 
     private CaseGrabService caseGrabService =  new CaseGrabService();

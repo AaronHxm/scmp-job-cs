@@ -9,6 +9,7 @@ import com.scmp.model.LogEntry;
 import com.scmp.model.User;
 import com.scmp.manager.QueryManager;
 import com.scmp.service.HistoryService;
+import com.scmp.service.LogService;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -39,7 +40,7 @@ public class MainUI extends Application {
 
     private User currentUser;
     private QueryManager apiService;
-    private CopyOnWriteArrayList<LogEntry> logs = new CopyOnWriteArrayList<>();
+    private LogService logService = LogService.getInstance();
     
     private ObservableList<ContractInfo> contractData = FXCollections.observableArrayList();
     private TextArea logTextArea;
@@ -537,69 +538,52 @@ public class MainUI extends Application {
     
     // 启动日志刷新线程
     private void startLogRefreshThread() {
-        Thread logThread = new Thread(() -> {
-            List<LogEntry> previousLogs = new ArrayList<>();
-            while (true) {
-                try {
-                    Thread.sleep(1000); // 每秒刷新一次
-                    List<LogEntry> currentLogs = getAllLogs();
-                    
-                    // 如果有新日志，更新UI
-                    if (currentLogs.size() > previousLogs.size()) {
-                        final StringBuilder logBuilder = new StringBuilder();
-                        for (LogEntry log : currentLogs) {
-                            logBuilder.append(log.getTimestamp())
-                                    .append(" [")
-                                    .append(log.getLevel())
-                                    .append("] ")
-                                    .append(log.getContractNumber())
-                                    .append(": ")
-                                    .append(log.getContent())
-                                    .append("\n");
-                        }
-                        
-                        final String logText = logBuilder.toString();
-                        Platform.runLater(() -> {
-                            logTextArea.setText(logText);
-                            logTextArea.setScrollTop(Double.MAX_VALUE); // 滚动到底部
-                        });
-                        
-                        previousLogs = new ArrayList<>(currentLogs);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    break;
-                }
-            }
+        // 添加日志监听器，实时更新UI
+        logService.addLogListener(logEntry -> {
+            Platform.runLater(() -> {
+                // 获取所有日志并更新UI
+                updateLogTextArea();
+            });
         });
-        logThread.setDaemon(true);
-        logThread.start();
+        
+        // 初始加载日志
+        updateLogTextArea();
+    }
+    
+    // 更新日志文本区域
+    private void updateLogTextArea() {
+        List<LogEntry> logs = logService.getAllLogs();
+        StringBuilder logBuilder = new StringBuilder();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        
+        for (LogEntry log : logs) {
+            logBuilder.append(log.getTimestamp().format(formatter))
+                    .append(" [")
+                    .append(log.getLevel())
+                    .append("] ")
+                    .append(log.getContractNumber())
+                    .append(": ")
+                    .append(log.getContent())
+                    .append("\n");
+        }
+        
+        final String logText = logBuilder.toString();
+        logTextArea.setText(logText);
+        logTextArea.setScrollTop(Double.MAX_VALUE); // 滚动到底部
     }
     
     // 内部日志记录方法
     private void logInfo(String content, String contractNumber) {
-        LogEntry logEntry = new LogEntry();
-        logEntry.setLevel(LogEntry.LogLevel.INFO);
-        logEntry.setContent(content);
-        logEntry.setContractNumber(contractNumber);
-        logEntry.setTimestamp(LocalDateTime.now());
-        logs.add(logEntry);
+        LogService.info(content, contractNumber);
     }
     
-
-    
     private void logError(String content, String contractNumber) {
-        LogEntry logEntry = new LogEntry();
-        logEntry.setLevel(LogEntry.LogLevel.ERROR);
-        logEntry.setContent(content);
-        logEntry.setContractNumber(contractNumber);
-        logEntry.setTimestamp(LocalDateTime.now());
-        logs.add(logEntry);
+        LogService.error(content, contractNumber);
     }
     
     // 获取所有日志
     private List<LogEntry> getAllLogs() {
-        return new ArrayList<>(logs);
+        return logService.getAllLogs();
     }
     
     // 显示警告对话框
