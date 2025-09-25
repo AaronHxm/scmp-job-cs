@@ -103,6 +103,8 @@ public class ApiService {
         List<ContractInfo> filteredContracts = new ArrayList<>();
         
         for (ContractInfo contract : allContracts) {
+
+            contract.setUserId(user.getToken());
             boolean passFilter = true;
             
             // 检查逾期天数过滤条件

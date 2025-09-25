@@ -18,7 +18,7 @@ public class Constants {
     public static final String ORG_TEMPLATE_ID = "1001";
     
     // 查询参数
-    public static final int PAGE_SIZE = 500;
+    public static final int PAGE_SIZE = 100;
 
     public static final String DCA_STATUS = "3";
     public static final String DCA_TYPE = "1";

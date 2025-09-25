@@ -22,11 +22,11 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -154,7 +154,9 @@ public class MainUI extends Application {
                     HistoryService historyService = new HistoryService();
                     filteredContracts.forEach(v ->{
                         List<HistoryInfo> historyInfoList = historyService.getHistoryInfoByContractNo(v.getContractNo(), v.getUserId());
-                        if(historyInfoList !=null && !historyInfoList.isEmpty()){
+                        System.out.println(historyInfoList);
+                        if(!CollectionUtils.isEmpty(historyInfoList)){
+                            log.info("合同号：{}，历史记录数：{}",v.getContractNo(),historyInfoList.size());
 //
                            String historyRemarks  = IntStream.range(0, historyInfoList.size())
                                     .mapToObj(i -> {
@@ -263,8 +265,14 @@ public class MainUI extends Application {
         TableColumn<ContractInfo, String> customerNameColumn = new TableColumn<>("姓名");
         customerNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomerName()));
         customerNameColumn.setPrefWidth(100);
-        
-        table.getColumns().addAll(selectColumn, contractNumberColumn, overdueDaysColumn, customerNameColumn);
+
+        // 客户姓名列
+        TableColumn<ContractInfo, String> customerHistoryRemarksColumn = new TableColumn<>("历史记录");
+        customerHistoryRemarksColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getHistoryRemarks()));
+        customerHistoryRemarksColumn.setPrefWidth(100);
+
+
+        table.getColumns().addAll(selectColumn, contractNumberColumn, overdueDaysColumn, customerNameColumn,customerHistoryRemarksColumn);
         table.setEditable(true);
         
         return table;
