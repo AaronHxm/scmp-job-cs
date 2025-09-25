@@ -1,7 +1,7 @@
 package com.scmp.ui;
 
 import com.scmp.model.User;
-import com.scmp.service.ApiService;
+import com.scmp.manager.QueryManager;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -11,13 +11,13 @@ import javafx.stage.Stage;
 
 public class LoginUI extends Application {
     
-    private ApiService apiService;
+    private QueryManager apiService;
     private User currentUser = new User();
     
     @Override
     public void init() {
         // 手动创建服务实例（替代Spring依赖注入）
-        apiService = new ApiService();
+        apiService = new QueryManager();
     }
     
     @Override

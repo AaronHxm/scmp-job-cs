@@ -1,4 +1,4 @@
-package com.scmp;
+package com.scmp.manager;
 
 
 import com.google.common.util.concurrent.RateLimiter;
@@ -18,31 +18,39 @@ public class GrapTaskManager {
 
     private static final int MAX_RETRIES = 100;
 
-    private LogService logService;
+    private LogService logService = new LogService();
 
 
-    private CaseGrabService caseGrabService;
+    private CaseGrabService caseGrabService =  new CaseGrabService();
 
-    private Executor contractProcessorExecutor;
+    int logical = Runtime.getRuntime().availableProcessors(); // 获取逻辑处理器数量
+
+    // I/O密集型任务配置（HTTP调用为主）
+    int corePoolSize = Math.min(64, logical * 4); // 20 * 4=80，保守上限64
+    int maxPoolSize = corePoolSize;
+
+
+    private Executor contractProcessorExecutor =  new ThreadPoolExecutor(
+            corePoolSize,      // 核心线程数
+            maxPoolSize,       // 最大线程数
+            60L,               // 空闲线程存活时间（秒）
+            TimeUnit.SECONDS,  // 时间单位
+            new LinkedBlockingQueue<>(2000), // 任务队列，容量2000
+            new ThreadFactory() {            // 自定义线程工厂
+                private int count = 1;
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("ContractProcessor-" + count++);
+                    return thread;
+                }
+            },
+            new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略：由调用线程执行
+    );;
 
     private static final int MAX_REQUESTS_PER_SECOND = 100;
 
     private final RateLimiter rateLimiter = RateLimiter.create(MAX_REQUESTS_PER_SECOND);
-    private final ExecutorService sendExecutor = Executors.newFixedThreadPool(MAX_REQUESTS_PER_SECOND);
-    private final ExecutorService callbackExecutor = Executors.newFixedThreadPool(
-            100, // 线程池大小
-            new ThreadFactory() {
-                private final AtomicInteger counter = new AtomicInteger(1);
-
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread thread = new Thread(r);
-                    thread.setName("callback-worker-" + counter.getAndIncrement());
-                    thread.setDaemon(true); // 设置为守护线程
-                    return thread;
-                }
-            }
-    );;
 
 
 
@@ -110,12 +118,6 @@ public class GrapTaskManager {
         // - 第一次立即重试（delay=0）
         // - 后续采用短延迟（避免过长等待）
         return attempt == 1 ? 0 : Math.min(200, (long) (50 * Math.pow(2, attempt)));
-    }
-
-
-    private String abbreviateResponse(String response) {
-        if (response == null) return "null";
-        return response.length() > 100 ? response.substring(0, 100) + "..." : response;
     }
 
     private boolean isSuccessResponse(String response) {

@@ -1,29 +1,22 @@
-package com.scmp.service;
+package com.scmp.manager;
 
 import com.scmp.model.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.scmp.service.ContractService;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
+
 
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.ArrayList;
 
 @Slf4j
-public class ApiService {
-    
-    private OkHttpClient client;
-    private static final Logger logger = Logger.getLogger(ApiService.class.getName());
-    private final CaseGrabService caseGrabService;
+public class QueryManager {
+
+    private static final Logger logger = Logger.getLogger(QueryManager.class.getName());
     private final ContractService contractService;
     
-    public ApiService() {
-        // 初始化OkHttpClient
-        this.client = new OkHttpClient();
-        // 初始化抢单服务
-        this.caseGrabService = new CaseGrabService();
+    public QueryManager() {
 
         this.contractService = new ContractService();
     }
@@ -158,29 +151,5 @@ public class ApiService {
         return Math.random() > 0.3; // 70%成功率
     }
     
-    // 抢单接口 - 新方法，使用实际的CaseGrabService
-    public boolean grabContract(User user, ContractInfo contract) {
-        logger.info("使用实际抢单服务调用抢单接口: " + contract.getContractNo() + "，用户: " + user.getUsername());
-        
-        // 检查必要参数
-        if (user == null || contract == null || contract.getSyskey() == null) {
-            logger.warning("抢单参数不完整");
-            return false;
-        }
-        
-        try {
-            // 使用CaseGrabService进行实际抢单，使用token作为userId
-            String result = caseGrabService.grabCase(contract.getSyskey(), contract.getContractNo(), user.getToken());
-            
-            // 记录抢单结果
-            logger.info("抢单结果: " + result);
-            
-            // 根据返回结果判断是否成功
-            // 实际项目中可能需要根据接口返回的具体格式来判断成功与否
-            return result != null && !result.contains("error") && !result.contains("失败");
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "抢单过程中发生异常", e);
-            return false;
-        }
-    }
+
 }

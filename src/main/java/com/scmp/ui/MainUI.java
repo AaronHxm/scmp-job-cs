@@ -1,12 +1,12 @@
 package com.scmp.ui;
 
 
-import com.scmp.GrapTaskManager;
+import com.scmp.manager.GrapTaskManager;
 import com.scmp.model.ContractInfo;
 import com.scmp.model.HistoryInfo;
 import com.scmp.model.LogEntry;
 import com.scmp.model.User;
-import com.scmp.service.ApiService;
+import com.scmp.manager.QueryManager;
 import com.scmp.service.HistoryService;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -37,14 +37,14 @@ public class MainUI extends Application {
     
 
     private User currentUser;
-    private ApiService apiService;
+    private QueryManager apiService;
     private Stage primaryStage;
     private CopyOnWriteArrayList<LogEntry> logs = new CopyOnWriteArrayList<>();
     
     private ObservableList<ContractInfo> contractData = FXCollections.observableArrayList();
     private TextArea logTextArea;
     
-    public MainUI(ApiService apiService, User currentUser) {
+    public MainUI(QueryManager apiService, User currentUser) {
         this.apiService = apiService;
         this.currentUser = currentUser;
     }
@@ -234,6 +234,7 @@ public class MainUI extends Application {
             for (ContractInfo contract : contractData) {
                 contract.setSelected(isSelected);
             }
+            table.refresh(); // 刷新表格视图
         });
         
         // 将复选框设置为表头
@@ -269,7 +270,7 @@ public class MainUI extends Application {
         // 客户姓名列
         TableColumn<ContractInfo, String> customerHistoryRemarksColumn = new TableColumn<>("历史记录");
         customerHistoryRemarksColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getHistoryRemarks()));
-        customerHistoryRemarksColumn.setPrefWidth(100);
+        customerHistoryRemarksColumn.setPrefWidth(500);
 
 
         table.getColumns().addAll(selectColumn, contractNumberColumn, overdueDaysColumn, customerNameColumn,customerHistoryRemarksColumn);
