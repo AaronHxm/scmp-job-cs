@@ -11,7 +11,6 @@ import com.scmp.manager.QueryManager;
 import com.scmp.service.HistoryService;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
