@@ -2,6 +2,7 @@ package com.scmp.manager;
 
 
 import com.google.common.util.concurrent.RateLimiter;
+import com.scmp.executor.ContractThreadPoolLazy;
 import com.scmp.model.ContractInfo;
 import com.scmp.model.ProcessResult;
 import com.scmp.service.CaseGrabService;
@@ -30,23 +31,7 @@ public class GrapTaskManager {
     int maxPoolSize = corePoolSize;
 
 
-    private Executor contractProcessorExecutor =  new ThreadPoolExecutor(
-            corePoolSize,      // 核心线程数
-            maxPoolSize,       // 最大线程数
-            60L,               // 空闲线程存活时间（秒）
-            TimeUnit.SECONDS,  // 时间单位
-            new LinkedBlockingQueue<>(2000), // 任务队列，容量2000
-            new ThreadFactory() {            // 自定义线程工厂
-                private int count = 1;
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread thread = new Thread(r);
-                    thread.setName("ContractProcessor-" + count++);
-                    return thread;
-                }
-            },
-            new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略：由调用线程执行
-    );;
+    private Executor contractProcessorExecutor =   ContractThreadPoolLazy.getInstance();
 
     private static final int MAX_REQUESTS_PER_SECOND = 100;
 
