@@ -1,6 +1,7 @@
 package com.scmp.ui;
 
 
+import com.scmp.executor.ContractThreadPoolLazy;
 import com.scmp.manager.GrapTaskManager;
 import com.scmp.model.ContractInfo;
 import com.scmp.model.HistoryInfo;
@@ -25,12 +26,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Slf4j
 public class MainUI extends Application {
@@ -38,7 +41,6 @@ public class MainUI extends Application {
 
     private User currentUser;
     private QueryManager apiService;
-    private Stage primaryStage;
     private CopyOnWriteArrayList<LogEntry> logs = new CopyOnWriteArrayList<>();
     
     private ObservableList<ContractInfo> contractData = FXCollections.observableArrayList();
@@ -152,28 +154,43 @@ public class MainUI extends Application {
 
                     //
                     HistoryService historyService = new HistoryService();
-                    filteredContracts.forEach(v ->{
-                        List<HistoryInfo> historyInfoList = historyService.getHistoryInfoByContractNo(v.getContractNo(), v.getUserId());
-                        System.out.println(historyInfoList);
-                        if(!CollectionUtils.isEmpty(historyInfoList)){
-                            log.info("合同号：{}，历史记录数：{}",v.getContractNo(),historyInfoList.size());
-//
-                           String historyRemarks  = IntStream.range(0, historyInfoList.size())
-                                    .mapToObj(i -> {
-                                        HistoryInfo info = historyInfoList.get(i);
-                                        // 处理可能为null的字段
-                                        String callTimeStr = info.getCallTime() != null ? info.getCallTime().toString() : "null";
-                                        String createNameStr = info.getCreateName() != null ? info.getCreateName() : "null";
-                                        String requireContentStr = info.getRequireContent() != null ? info.getRequireContent() : "null";
 
-                                        // 格式化字符串：序号、callTime，客服：【createName】联系结果为：【requireContent】
-                                        return (i + 1) + "、" + callTimeStr + "，客服：【" + createNameStr + "】联系结果为：【" + requireContentStr + "】";
-                                    })
-                                    .collect(Collectors.joining("\n"));
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-                           v.setHistoryRemarks(historyRemarks);
-                        }
-                    });
+                    List<CompletableFuture<Void>> futures = filteredContracts.stream()
+                            .map(contract -> CompletableFuture.runAsync(() -> {
+                                try {
+                                    List<HistoryInfo> historyInfoList = historyService.getHistoryInfoByContractNo(
+                                            contract.getContractNo(), contract.getUserId());
+
+                                    if (historyInfoList == null || historyInfoList.isEmpty()) {
+                                        return;
+                                    }
+
+                                    historyInfoList.stream()
+                                            .max(Comparator.comparing(HistoryInfo::getOrderCreateTime))
+                                            .ifPresent(latestHistory -> {
+                                                String formattedDate = latestHistory.getOrderCreateTime() != null
+                                                        ? LocalDateTime.ofInstant(latestHistory.getOrderCreateTime().toInstant(), ZoneId.systemDefault())
+                                                        .format(formatter)
+                                                        : "null";
+
+                                                String remarks = String.format("%s，客服：%s，结果：%s",
+                                                        formattedDate,
+                                                        latestHistory.getCreateName() != null ? latestHistory.getCreateName() : "null",
+                                                        latestHistory.getRequireContent() != null ? latestHistory.getRequireContent() : "null");
+
+                                                contract.setHistoryRemarks(remarks);
+                                            });
+                                } catch (Exception exception) {
+                                    log.error("处理合同 {} 历史记录异常", contract.getContractNo(), exception);
+                                }
+                            }, ContractThreadPoolLazy.getInstance()))
+                            .collect(Collectors.toList());
+
+
+                    // 等待所有任务完成
+                    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
                     
                     contractData.setAll(filteredContracts);
                     logInfo("查询合同成功，获取到 " + filteredContracts.size() + " 条记录", "-");
@@ -302,7 +319,7 @@ public class MainUI extends Application {
                 // 清理资源
                 stop();
                 // 关闭当前窗口
-                primaryStage.close();
+
                 // 打开登录页面
                 LoginUI loginUI = new LoginUI();
                 Stage loginStage = new Stage();

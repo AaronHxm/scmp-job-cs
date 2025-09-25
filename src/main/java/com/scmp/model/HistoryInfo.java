@@ -1,6 +1,8 @@
 package com.scmp.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.Date;
@@ -23,4 +25,8 @@ public class HistoryInfo {
      * 联系人
      */
     private String createName;
+
+    @JsonProperty("orderCreateTime")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date orderCreateTime;
 }
