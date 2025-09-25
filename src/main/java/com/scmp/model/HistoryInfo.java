@@ -1,10 +1,12 @@
 package com.scmp.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.util.Date;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class HistoryInfo {
 
     /**
@@ -13,7 +15,7 @@ public class HistoryInfo {
      */
     private String contractNo;
 
-    private Date callTime;
+    private String callTime;
 
     private String requireContent;
 
