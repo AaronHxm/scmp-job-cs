@@ -358,15 +358,13 @@ public class MainUI extends Application {
         for (int i = 0; i < 24; i++) {
             hourComboBox.getItems().add(i);
         }
-        hourComboBox.setValue(LocalDateTime.now().getHour());
-        hourComboBox.setPrefWidth(60);
+        hourComboBox.setPrefWidth(100);
 
         ComboBox<Integer> minuteComboBox = new ComboBox<>();
         for (int i = 0; i < 60; i++) {
             minuteComboBox.getItems().add(i);
         }
-        minuteComboBox.setValue(LocalDateTime.now().getMinute());
-        minuteComboBox.setPrefWidth(60);
+        minuteComboBox.setPrefWidth(100);
         
         // 修复分钟选择功能
         minuteComboBox.setOnAction(event -> {
@@ -380,8 +378,7 @@ public class MainUI extends Application {
         for (int i = 0; i < 60; i++) {
             secondComboBox.getItems().add(i);
         }
-        secondComboBox.setValue(LocalDateTime.now().getSecond());
-        secondComboBox.setPrefWidth(60);
+        secondComboBox.setPrefWidth(100);
 
         // 创建倒计时标签
         countdownLabel = new Label("无定时任务");
