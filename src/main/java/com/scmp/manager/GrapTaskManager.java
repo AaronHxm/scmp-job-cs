@@ -97,6 +97,7 @@ public class GrapTaskManager {
             }
         }
 
+        logService.error("订单号:{},重试次数:{},结果:{},甲方返回信息:{}", contract.getContractNo(),contract.getContractNo(),attempts,"失败",lastResponse);
 
         return new ProcessResult(contract.getContractNo(), false, lastResponse, attempts);
     }
