@@ -1,6 +1,8 @@
 package com.scmp.model;
 
 import java.util.Date;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 /**
  * 合同信息类，包含合同的详细字段信息
@@ -96,7 +98,7 @@ public class ContractInfo {
      */
     private String historyRemarks = "暂无客服联系记录";
 
-    private boolean selected;
+    private final BooleanProperty selected = new SimpleBooleanProperty(false);
     public String getHistoryRemarks() {
         return historyRemarks;
     }
@@ -106,13 +108,9 @@ public class ContractInfo {
     }
 
 
-    public boolean isSelected() {
-        return selected;
-    }
-
-    public void setSelected(boolean selected) {
-        this.selected = selected;
-    }
+    public final boolean isSelected() { return selected.get(); }
+    public final void setSelected(boolean value) { selected.set(value); }
+    public final BooleanProperty selectedProperty() { return selected; }
 
     // getter和setter方法
     public Long getSyskey() { return syskey; }

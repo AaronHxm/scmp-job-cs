@@ -23,7 +23,6 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -191,8 +190,8 @@ public class MainUI extends Application {
 
                     // 等待所有任务完成
                     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-                    
-                    contractData.setAll(filteredContracts);
+
+                    contractData.setAll( generateMockContracts());
                     logInfo("查询合同成功，获取到 " + filteredContracts.size() + " 条记录", "-");
                 } else {
                     showAlert("错误", "用户未登录");
@@ -229,18 +228,8 @@ public class MainUI extends Application {
         
         // 勾选列
         TableColumn<ContractInfo, Boolean> selectColumn = new TableColumn<>("选择");
-        selectColumn.setCellValueFactory(cellData -> new SimpleBooleanProperty(cellData.getValue().isSelected()));
-        selectColumn.setCellFactory((TableColumn<ContractInfo, Boolean> param) -> {
-            CheckBoxTableCell<ContractInfo, Boolean> cell = new CheckBoxTableCell<>();
-            cell.setOnMouseClicked(event -> {
-                if (cell.getIndex() >= 0 && cell.getIndex() < contractData.size()) {
-                    ContractInfo contract = contractData.get(cell.getIndex());
-                    contract.setSelected(!contract.isSelected());
-                    updateSelectAllState(checkBox, table);
-                }
-            });
-            return cell;
-        });
+        selectColumn.setCellValueFactory(cellData -> cellData.getValue().selectedProperty());
+        selectColumn.setCellFactory(CheckBoxTableCell.forTableColumn(selectColumn));
         selectColumn.setEditable(true);
         selectColumn.setPrefWidth(60);
         checkBox.setPadding(new Insets(0, 0, 0, 25)); // 调整位置使其居中
@@ -264,9 +253,14 @@ public class MainUI extends Application {
             }
         });
         
-        // 监听表格选择变化，更新全选状态
+        // 监听表格选择变化，自动勾选复选框
         table.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                newValue.setSelected(true);
+                log.debug("行选中自动勾选合同: {}", newValue.getContractNo());
+            }
             updateSelectAllState(checkBox, table);
+            table.refresh();
         });
         
         // 合同号列
@@ -334,16 +328,24 @@ public class MainUI extends Application {
         grabNowButton.setPrefWidth(100);
         grabNowButton.setStyle("-fx-font-size: 14px;");
         grabNowButton.setOnAction(e -> {
+            // 强制刷新表格确保选中状态同步
+            TableView<ContractInfo> table = (TableView<ContractInfo>) ((HBox) grabNowButton.getParent())
+                .getScene().lookup(".table-view");
+            if (table != null) {
+                table.refresh();
+            }
+
             List<ContractInfo> selectedContracts = getSelectedContracts();
             if (selectedContracts.isEmpty()) {
-                showAlert("提示", "请先选择要抢的合同");
+                showAlert("提示", "请先勾选要抢的合同");
                 return;
             }
 
-            // 执行抢单操作
+            logInfo("开始抢单，选中合同数量：" + selectedContracts.size(), "-");
+            
+            // 执行抢单操作，只处理选中的合同
             GrapTaskManager grapTaskManager = new GrapTaskManager();
-
-            grapTaskManager.processContractsAsync(contractData);
+            grapTaskManager.processContractsAsync(FXCollections.observableArrayList(selectedContracts));
         });
 
         // 定时抢单按钮和时间选择器
@@ -488,14 +490,19 @@ public class MainUI extends Application {
         countdownThread.start();
     }
     
-    // 获取选中的合同
+    // 获取选中的合同（检查复选框和行选中状态）
     private List<ContractInfo> getSelectedContracts() {
         List<ContractInfo> selected = new ArrayList<>();
+        
+        // 检查复选框选中状态
         for (ContractInfo contract : contractData) {
             if (contract.isSelected()) {
                 selected.add(contract);
+                log.debug("复选框选中合同: {}", contract.getContractNo());
             }
         }
+
+        log.debug("总选中合同数: {}", selected.size());
         return selected;
     }
     
@@ -583,14 +590,7 @@ public class MainUI extends Application {
         logs.add(logEntry);
     }
     
-    private void logSuccess(String content, String contractNumber) {
-        LogEntry logEntry = new LogEntry();
-        logEntry.setLevel(LogEntry.LogLevel.SUCCESS);
-        logEntry.setContent(content);
-        logEntry.setContractNumber(contractNumber);
-        logEntry.setTimestamp(LocalDateTime.now());
-        logs.add(logEntry);
-    }
+
     
     private void logError(String content, String contractNumber) {
         LogEntry logEntry = new LogEntry();
