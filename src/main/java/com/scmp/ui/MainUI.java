@@ -36,60 +36,60 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class MainUI extends Application {
-    
+
 
     private User currentUser;
     private QueryManager apiService;
     private LogService logService = LogService.getInstance();
-    
+
     private ObservableList<ContractInfo> contractData = FXCollections.observableArrayList();
     private TextArea logTextArea;
-    
+
     public MainUI(QueryManager apiService, User currentUser) {
         this.apiService = apiService;
         this.currentUser = currentUser;
     }
-    
+
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("合同抢单系统");
-        
+
         // 创建主面板
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
-        
+
         // 创建搜索面板
         VBox searchPanel = createSearchPanel();
         root.setTop(searchPanel);
-        
+
         // 创建合同列表表格
         TableView<ContractInfo> contractTable = createContractTable();
         root.setCenter(contractTable);
-        
+
         // 创建抢单按钮和定时抢单设置
         HBox actionPanel = createActionPanel();
         root.setBottom(actionPanel);
-        
+
         // 创建日志区域
         logTextArea = new TextArea();
         logTextArea.setEditable(false);
         logTextArea.setPrefHeight(200);
-        
+
         // 创建分割面板，放置合同列表和日志
         SplitPane splitPane = new SplitPane();
         splitPane.setOrientation(javafx.geometry.Orientation.VERTICAL);
         splitPane.getItems().addAll(contractTable, new VBox(new Label("抢单日志"), logTextArea));
         root.setCenter(splitPane);
-        
+
         // 设置场景，增大宽度以适应字母选择区域
         Scene scene = new Scene(root, 1200, 650);
         primaryStage.setScene(scene);
         primaryStage.show();
-        
+
         // 启动日志刷新线程
         startLogRefreshThread();
     }
-    
+
     // 创建搜索面板
     private VBox createSearchPanel() {
         VBox panel = new VBox(10);
@@ -142,10 +142,10 @@ public class MainUI extends Application {
                         logInfo("逾期天数输入无效，使用默认值360", "-");
                         maxOverdueDays = 360;
                     }
-                    
+
                     // 使用API查询合同，传入选中的字母列表和逾期天数
                     List<ContractInfo> filteredContracts = apiService.queryContracts(currentUser, maxOverdueDays, selectedLetters);
-                    
+
                     // 为每个合同设置选中状态为false
                     for (ContractInfo contract : filteredContracts) {
                         contract.setSelected(false);
@@ -191,7 +191,7 @@ public class MainUI extends Application {
                     // 等待所有任务完成
                     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-                    contractData.setAll( generateMockContracts());
+                    contractData.setAll( filteredContracts);
                     logInfo("查询合同成功，获取到 " + filteredContracts.size() + " 条记录", "-");
                 } else {
                     showAlert("错误", "用户未登录");
@@ -217,15 +217,15 @@ public class MainUI extends Application {
 
         return panel;
     }
-    
+
     // 创建合同表格
     private TableView<ContractInfo> createContractTable() {
         TableView<ContractInfo> table = new TableView<>();
         table.setItems(contractData);
-        
+
         // 添加全选功能
         CheckBox checkBox = new CheckBox();
-        
+
         // 勾选列
         TableColumn<ContractInfo, Boolean> selectColumn = new TableColumn<>("选择");
         selectColumn.setCellValueFactory(cellData -> cellData.getValue().selectedProperty());
@@ -233,7 +233,7 @@ public class MainUI extends Application {
         selectColumn.setEditable(true);
         selectColumn.setPrefWidth(60);
         checkBox.setPadding(new Insets(0, 0, 0, 25)); // 调整位置使其居中
-        
+
         // 全选功能实现
         checkBox.setOnAction(event -> {
             boolean isSelected = checkBox.isSelected();
@@ -242,17 +242,17 @@ public class MainUI extends Application {
             }
             table.refresh(); // 刷新表格视图
         });
-        
+
         // 将复选框设置为表头
         selectColumn.setGraphic(checkBox);
-        
+
         // 监听数据变化，更新全选状态
         contractData.addListener((javafx.collections.ListChangeListener<ContractInfo>) c -> {
             while (c.next()) {
                 updateSelectAllState(checkBox, table);
             }
         });
-        
+
         // 监听表格选择变化，自动勾选复选框
         table.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -262,17 +262,17 @@ public class MainUI extends Application {
             updateSelectAllState(checkBox, table);
             table.refresh();
         });
-        
+
         // 合同号列
         TableColumn<ContractInfo, String> contractNumberColumn = new TableColumn<>("合同号");
         contractNumberColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getContractNo()));
         contractNumberColumn.setPrefWidth(150);
-        
+
         // 逾期天数列
         TableColumn<ContractInfo, Integer> overdueDaysColumn = new TableColumn<>("逾期天数");
         overdueDaysColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getTotalODDays()).asObject());
         overdueDaysColumn.setPrefWidth(100);
-        
+
         // 客户姓名列
         TableColumn<ContractInfo, String> customerNameColumn = new TableColumn<>("姓名");
         customerNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomerName()));
@@ -286,10 +286,10 @@ public class MainUI extends Application {
 
         table.getColumns().addAll(selectColumn, contractNumberColumn, overdueDaysColumn, customerNameColumn,customerHistoryRemarksColumn);
         table.setEditable(true);
-        
+
         return table;
     }
-    
+
     // 倒计时显示标签
     private Label countdownLabel;
     // 当前倒计时任务
@@ -297,7 +297,7 @@ public class MainUI extends Application {
     // 存储定时任务信息
     private String currentTaskId;
     private LocalDateTime currentGrabTime;
-    
+
     // 创建操作面板
     private HBox createActionPanel() {
         HBox panel = new HBox(10);
@@ -322,7 +322,7 @@ public class MainUI extends Application {
                 logError("返回登录页面失败: " + ex.getMessage(), "");
             }
         });
-        
+
         // 立即抢单按钮 - 增大尺寸
         Button grabNowButton = new Button("立即抢单");
         grabNowButton.setPrefWidth(100);
@@ -342,7 +342,7 @@ public class MainUI extends Application {
             }
 
             logInfo("开始抢单，选中合同数量：" + selectedContracts.size(), "-");
-            
+
             // 执行抢单操作，只处理选中的合同
             GrapTaskManager grapTaskManager = new GrapTaskManager();
             grapTaskManager.processContractsAsync(FXCollections.observableArrayList(selectedContracts));
@@ -365,7 +365,7 @@ public class MainUI extends Application {
             minuteComboBox.getItems().add(i);
         }
         minuteComboBox.setPrefWidth(100);
-        
+
         // 修复分钟选择功能
         minuteComboBox.setOnAction(event -> {
             // 确保值被正确设置
@@ -416,10 +416,10 @@ public class MainUI extends Application {
                 // 保存定时任务信息
                 currentTaskId = "grab_task_" + System.currentTimeMillis();
                 currentGrabTime = grabTime;
-                
+
                 // 启动倒计时
                 startCountdown();
-                
+
                 // 创建定时任务
                 final String token = currentUser.getToken();
                 // 使用Java内置的ScheduledExecutorService来替代taskManager
@@ -453,7 +453,7 @@ public class MainUI extends Application {
 
         return panel;
     }
-    
+
     // 启动倒计时
     private void startCountdown() {
         countdownThread = new Thread(() -> {
@@ -461,21 +461,21 @@ public class MainUI extends Application {
                 try {
                     LocalDateTime now = LocalDateTime.now();
                     long secondsUntilGrab = now.until(currentGrabTime, java.time.temporal.ChronoUnit.SECONDS);
-                    
+
                     if (secondsUntilGrab <= 0) {
                         Platform.runLater(() -> countdownLabel.setText("抢单任务已执行"));
                         break;
                     }
-                    
+
                     // 计算时分秒
                     long hours = secondsUntilGrab / 3600;
                     long minutes = (secondsUntilGrab % 3600) / 60;
                     long seconds = secondsUntilGrab % 60;
-                    
+
                     String countdownText = String.format("距离抢单还剩：%02d:%02d:%02d", hours, minutes, seconds);
-                    
+
                     Platform.runLater(() -> countdownLabel.setText(countdownText));
-                    
+
                     Thread.sleep(1000); // 每秒更新一次
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -486,11 +486,11 @@ public class MainUI extends Application {
         countdownThread.setDaemon(true);
         countdownThread.start();
     }
-    
+
     // 获取选中的合同（检查复选框和行选中状态）
     private List<ContractInfo> getSelectedContracts() {
         List<ContractInfo> selected = new ArrayList<>();
-        
+
         // 检查复选框选中状态
         for (ContractInfo contract : contractData) {
             if (contract.isSelected()) {
@@ -502,14 +502,14 @@ public class MainUI extends Application {
         log.debug("总选中合同数: {}", selected.size());
         return selected;
     }
-    
+
     // 更新全选状态
     private void updateSelectAllState(CheckBox checkBox, TableView<ContractInfo> table) {
         if (contractData.isEmpty()) {
             checkBox.setSelected(false);
             return;
         }
-        
+
         boolean allSelected = true;
         for (ContractInfo contract : contractData) {
             if (!contract.isSelected()) {
@@ -517,9 +517,9 @@ public class MainUI extends Application {
                 break;
             }
         }
-        
+
         checkBox.setSelected(allSelected);
-        
+
         // 如果有部分选中，设置为不确定状态
         boolean noneSelected = true;
         for (ContractInfo contract : contractData) {
@@ -528,14 +528,14 @@ public class MainUI extends Application {
                 break;
             }
         }
-        
+
         if (!allSelected && !noneSelected) {
             checkBox.setIndeterminate(true);
         } else {
             checkBox.setIndeterminate(false);
         }
     }
-    
+
     // 启动日志刷新线程
     private void startLogRefreshThread() {
         // 添加日志监听器，实时更新UI
@@ -545,17 +545,17 @@ public class MainUI extends Application {
                 updateLogTextArea();
             });
         });
-        
+
         // 初始加载日志
         updateLogTextArea();
     }
-    
+
     // 更新日志文本区域
     private void updateLogTextArea() {
         List<LogEntry> logs = logService.getAllLogs();
         StringBuilder logBuilder = new StringBuilder();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        
+
         for (LogEntry log : logs) {
             logBuilder.append(log.getTimestamp().format(formatter))
                     .append(" [")
@@ -564,26 +564,26 @@ public class MainUI extends Application {
                     .append(log.getContent())
                     .append("\n");
         }
-        
+
         final String logText = logBuilder.toString();
         logTextArea.setText(logText);
         logTextArea.setScrollTop(Double.MAX_VALUE); // 滚动到底部
     }
-    
+
     // 内部日志记录方法
     private void logInfo(String content, String contractNumber) {
         LogService.info(content, contractNumber);
     }
-    
+
     private void logError(String content, String contractNumber) {
         LogService.error(content, contractNumber);
     }
-    
+
     // 获取所有日志
     private List<LogEntry> getAllLogs() {
         return logService.getAllLogs();
     }
-    
+
     // 显示警告对话框
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -592,7 +592,7 @@ public class MainUI extends Application {
         alert.setContentText(message);
         alert.showAndWait();
     }
-    
+
     @Override
     public void stop() {
         // 清理资源
@@ -600,12 +600,12 @@ public class MainUI extends Application {
             countdownThread.interrupt();
         }
     }
-    
+
     // 生成模拟合同数据
     private List<ContractInfo> generateMockContracts() {
         List<ContractInfo> contracts = new ArrayList<>();
         String[] letters = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
-        
+
         for (int i = 0; i < 20; i++) {
             ContractInfo contract = new ContractInfo();
             contract.setContractNo("CONTRACT-" + letters[i % letters.length] + "-" + (1000 + i));
@@ -614,7 +614,7 @@ public class MainUI extends Application {
             contract.setSelected(false);
             contracts.add(contract);
         }
-        
+
         return contracts;
     }
 }
