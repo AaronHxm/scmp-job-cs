@@ -109,6 +109,9 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.scmp.JavaFxApp</mainClass>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>reference.conf</resource>
+                                </transformer>
                             </transformers>
                             <filters>
                                 <filter>
@@ -118,6 +121,11 @@
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
                                     </excludes>
+                                    <includes>
+                                        <include>**/*.properties</include>
+                                        <include>**/*.xml</include>
+                                        <include>**/*.yml</include>
+                                    </includes>
                                 </filter>
                             </filters>
                         </configuration>
@@ -127,15 +135,57 @@
             
             <!-- 使用jpackage打包为exe -->
             <plugin>
+                <groupId>org.panteleyev</groupId>
+                <artifactId>jpackage-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <configuration>
+                    <name>SCMPJobClient</name>
+                    <appVersion>1.0</appVersion>
+                    <vendor>SCMP</vendor>
+                    <mainClass>com.scmp.JavaFxApp</mainClass>
+                    <modulePaths>
+                        <modulePath>${project.build.directory}/modules</modulePath>
+                    </modulePaths>
+                    <jlinkOptions>
+                        <option>--strip-debug</option>
+                        <option>--compress=2</option>
+                        <option>--no-header-files</option>
+                        <option>--no-man-pages</option>
+                        <option>--add-modules=javafx.controls,javafx.fxml</option>
+                    </jlinkOptions>
+                    <winConfig>
+                        <console>false</console>
+                        <menu>true</menu>
+                        <upgradeUuid>a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8</upgradeUuid>
+                    </winConfig>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jpackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
-                <configuration>
-                    <mainClass>com.scmp.JavaFxApp</mainClass>
-                    <launcher>SCMPJobClient</launcher>
-                    <jlinkImageName>scmp-job-client</jlinkImageName>
-                    <jlinkZipName>scmp-job-client</jlinkZipName>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <configuration>
+                            <mainClass>com.scmp.JavaFxApp</mainClass>
+                            <launcher>app</launcher>
+                            <jlinkZipName>app</jlinkZipName>
+                            <jlinkImageName>app</jlinkImageName>
+                            <noManPages>true</noManPages>
+                            <stripDebug>true</stripDebug>
+                            <compress>2</compress>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
