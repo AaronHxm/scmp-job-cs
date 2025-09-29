@@ -1,0 +1,7 @@
+--name "scmp"
+--type app-image
+--input target
+--main-jar test-job-1.0-SNAPSHOT.jar
+--main-class org.springframework.boot.loader.JarLauncher
+--dest dist
+--verbose
