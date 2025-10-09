@@ -32,7 +32,7 @@ public class GrapTaskManager {
 
     private Executor contractProcessorExecutor =   ContractThreadPoolLazy.getInstance();
 
-    private static final int MAX_REQUESTS_PER_SECOND = 100;
+    private static final int MAX_REQUESTS_PER_SECOND = 300;
 
     private final RateLimiter rateLimiter = RateLimiter.create(MAX_REQUESTS_PER_SECOND);
 
