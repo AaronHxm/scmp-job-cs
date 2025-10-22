@@ -202,7 +202,7 @@ public class LogService {
     private void addLog(LogEntry logEntry) {
         logs.add(logEntry);
         // 写入文件
-        writeToFile(logEntry);
+      //  writeToFile(logEntry);
         // 通知所有监听器
         for (Consumer<LogEntry> listener : logListeners) {
             listener.accept(logEntry);
