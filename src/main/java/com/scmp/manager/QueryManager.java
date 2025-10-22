@@ -103,7 +103,7 @@ public class QueryManager {
             boolean passFilter = true;
             
             // 检查逾期天数过滤条件
-            if (maxOverdueDays != null && maxOverdueDays >= 0 && contract.getTotalODDays() != null) {
+            if (contract.getTotalODDays() != null) {
                 passFilter = contract.getTotalODDays() >= minOverdueDays && contract.getTotalODDays() <= maxOverdueDays;
             }
             
