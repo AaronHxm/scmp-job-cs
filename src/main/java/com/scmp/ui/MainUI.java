@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -99,8 +98,14 @@ public class MainUI extends Application {
         HBox searchBox = new HBox(10);
 
         // 逾期天数输入框
+
+        TextField minOverdueDaysField = new TextField("0");
+        minOverdueDaysField.setPrefWidth(100);
+        minOverdueDaysField.setDisable(true);
+
         TextField overdueDaysField = new TextField("360");
         overdueDaysField.setPrefWidth(100);
+        overdueDaysField.setDisable(true);
 
         // 创建字母选择面板（不使用滚动条，直接适应页面宽度）
         HBox letterBox = new HBox(5);
@@ -136,11 +141,14 @@ public class MainUI extends Application {
                 // 查询合同
                 if (currentUser != null && currentUser.isLoggedIn()) {
                     Integer maxOverdueDays = null;
+                    Integer minOverdueDays = null;
                     try {
                         maxOverdueDays = Integer.parseInt(overdueDaysField.getText());
+                        minOverdueDays = Integer.parseInt(minOverdueDaysField.getText());
                     } catch (NumberFormatException ex) {
                         logInfo("逾期天数输入无效，使用默认值360", "-");
                         maxOverdueDays = 360;
+                        minOverdueDays = 0;
                     }
 
                     // 使用API查询合同，传入选中的字母列表和逾期天数
@@ -191,7 +199,7 @@ public class MainUI extends Application {
                     // 等待所有任务完成
                     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-                    contractData.setAll( filteredContracts);
+                    contractData.setAll(filteredContracts);
                     logInfo("查询合同成功，获取到 " + filteredContracts.size() + " 条记录", "-");
                 } else {
                     showAlert("错误", "用户未登录");
@@ -203,16 +211,19 @@ public class MainUI extends Application {
         });
 
         searchBox.getChildren().addAll(
-            new Label("逾期天数小于："),
-            overdueDaysField,
-            queryButton
+                new Label("逾期天数大于："),
+                minOverdueDaysField,
+                new Label("逾期天数小于："),
+                overdueDaysField,
+                queryButton
         );
 
+
         panel.getChildren().addAll(
-            new Label("搜索条件"),
-            searchBox,
-            new Label("选择字母（可多选）："),
-            letterBox
+                new Label("搜索条件"),
+                searchBox,
+                new Label("选择字母（可多选）："),
+                letterBox
         );
 
         return panel;
@@ -284,7 +295,7 @@ public class MainUI extends Application {
         customerHistoryRemarksColumn.setPrefWidth(500);
 
 
-        table.getColumns().addAll(selectColumn, contractNumberColumn, overdueDaysColumn, customerNameColumn,customerHistoryRemarksColumn);
+        table.getColumns().addAll(selectColumn, contractNumberColumn, overdueDaysColumn, customerNameColumn, customerHistoryRemarksColumn);
         table.setEditable(true);
 
         return table;
@@ -330,7 +341,7 @@ public class MainUI extends Application {
         grabNowButton.setOnAction(e -> {
             // 强制刷新表格确保选中状态同步
             TableView<ContractInfo> table = (TableView<ContractInfo>) ((HBox) grabNowButton.getParent())
-                .getScene().lookup(".table-view");
+                    .getScene().lookup(".table-view");
             if (table != null) {
                 table.refresh();
             }
@@ -439,16 +450,16 @@ public class MainUI extends Application {
         });
 
         panel.getChildren().addAll(
-            backToLoginButton,
-            grabNowButton,
-            new Label("定时抢单时间："),
-            hourComboBox,
-            new Label("："),
-            minuteComboBox,
-            new Label("："),
-            secondComboBox,
-            scheduleGrabButton,
-            countdownLabel
+                backToLoginButton,
+                grabNowButton,
+                new Label("定时抢单时间："),
+                hourComboBox,
+                new Label("："),
+                minuteComboBox,
+                new Label("："),
+                secondComboBox,
+                scheduleGrabButton,
+                countdownLabel
         );
 
         return panel;
@@ -609,7 +620,7 @@ public class MainUI extends Application {
         for (int i = 0; i < 20; i++) {
             ContractInfo contract = new ContractInfo();
             contract.setContractNo("CONTRACT-" + letters[i % letters.length] + "-" + (1000 + i));
-            contract.setTotalODDays((int)(Math.random() * 360));
+            contract.setTotalODDays((int) (Math.random() * 360));
             contract.setCustomerName("客户" + (i + 1));
             contract.setSelected(false);
             contracts.add(contract);
