@@ -152,7 +152,7 @@ public class MainUI extends Application {
                     }
 
                     // 使用API查询合同，传入选中的字母列表和逾期天数
-                    List<ContractInfo> filteredContracts = apiService.queryContracts(currentUser, maxOverdueDays, selectedLetters);
+                    List<ContractInfo> filteredContracts = apiService.queryContracts(currentUser, minOverdueDays,maxOverdueDays, selectedLetters);
 
                     // 为每个合同设置选中状态为false
                     for (ContractInfo contract : filteredContracts) {

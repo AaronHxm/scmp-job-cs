@@ -77,7 +77,7 @@ public class QueryManager {
     }
     
     // 查询合同接口 - 带筛选条件
-    public List<ContractInfo> queryContracts(User user, Integer maxOverdueDays, List<String> letters) {
+    public List<ContractInfo> queryContracts(User user, Integer minOverdueDays,Integer maxOverdueDays, List<String> letters) {
         // 首先查询所有合同
         QueryResponse<ContractInfo> contractInfoQueryResponse = contractService.fetchAllPreGrabCases(user);
         if (Objects.isNull(contractInfoQueryResponse)) {
@@ -85,9 +85,11 @@ public class QueryManager {
         }
 
         List<ContractInfo> allContracts = contractInfoQueryResponse.getRows();
-        
+        if (minOverdueDays == null){
+            minOverdueDays = 0;
+        }
         // 如果没有任何过滤条件，直接返回所有合同
-        if ((maxOverdueDays == null || maxOverdueDays < 0) ) {
+        if ((maxOverdueDays == null || maxOverdueDays < 0)  ) {
             logger.info("没有设置过滤条件，返回所有合同");
             return allContracts;
         }
@@ -102,7 +104,7 @@ public class QueryManager {
             
             // 检查逾期天数过滤条件
             if (maxOverdueDays != null && maxOverdueDays >= 0 && contract.getTotalODDays() != null) {
-                passFilter = contract.getTotalODDays() < maxOverdueDays;
+                passFilter = contract.getTotalODDays() >= minOverdueDays && contract.getTotalODDays() <= maxOverdueDays;
             }
             
             // 如果通过了逾期天数过滤，再检查字母过滤条件
