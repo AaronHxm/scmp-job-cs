@@ -62,3 +62,8 @@ src/main/java/com/scmp/
 - 查询条件支持设置逾期天数（整数，默认360）和选择字母（A-Z）
 - 定时抢单时间格式为HH:mm:ss
 - 抢单日志会实时显示在界面底部
+
+## 打包说明
+ - 使用Maven构建项目：`mvn clean package`
+ - 打开cmd，进入项目目录 cd /d F:\IdeaProject\scmp-job-cs
+ - 执行命令，jpackage @package.txt
