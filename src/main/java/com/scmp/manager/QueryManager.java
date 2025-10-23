@@ -2,6 +2,7 @@ package com.scmp.manager;
 
 import com.scmp.model.*;
 import com.scmp.service.ContractService;
+import com.scmp.service.LogService;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -93,7 +94,7 @@ public class QueryManager {
             logger.info("没有设置过滤条件，返回所有合同");
             return allContracts;
         }
-        
+        LogService.info("查询条件，逾期天数在{}到{}之间", "",minOverdueDays,maxOverdueDays);
         // 创建过滤后的合同列表
         List<ContractInfo> filteredContracts = new ArrayList<>();
         
