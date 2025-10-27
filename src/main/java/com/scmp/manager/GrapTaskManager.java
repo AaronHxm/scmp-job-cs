@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class GrapTaskManager {
 
 
-    private static final int MAX_RETRIES = 100;
+    private static final int MAX_RETRIES = 500;
 
     private LogService logService = LogService.getInstance();
 
