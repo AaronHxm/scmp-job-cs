@@ -101,11 +101,9 @@ public class MainUI extends Application {
 
         TextField minOverdueDaysField = new TextField("0");
         minOverdueDaysField.setPrefWidth(100);
-        minOverdueDaysField.setDisable(true);
 
         TextField overdueDaysField = new TextField("360");
         overdueDaysField.setPrefWidth(100);
-        overdueDaysField.setDisable(true);
 
         // 创建字母选择面板（不使用滚动条，直接适应页面宽度）
         HBox letterBox = new HBox(5);
@@ -211,9 +209,9 @@ public class MainUI extends Application {
         });
 
         searchBox.getChildren().addAll(
-                new Label("逾期天数大于："),
+                new Label("逾期天数："),
                 minOverdueDaysField,
-                new Label("逾期天数小于："),
+                new Label("到："),
                 overdueDaysField,
                 queryButton
         );
